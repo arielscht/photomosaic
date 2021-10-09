@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <string.h>
 #include <math.h>
 #include "photomosaic.h"
@@ -41,6 +42,39 @@ float calculateDistance(Tile *tile, Tile *piece)
         (2 + ((255 - redMean) / 256)) * pow(piece->avgB - tile->avgB, 2)));
 
     return distance;
+}
+
+void readTiles(char *dirName, struct dirent **filesPath, int *filesCount, Tile *tiles)
+{
+    FILE *file;
+    char tempPath[200];
+    int errorsCount = 0;
+
+    for (int i = 0; i < *filesCount; i++)
+    {
+        tempPath[0] = '\0';
+        strcat(tempPath, dirName);
+        strcat(tempPath, "/");
+        strcat(tempPath, filesPath[i]->d_name);
+
+        file = fopen(tempPath, "r");
+
+        if (!file)
+        {
+            fprintf(stderr, "ERROR OPENING FILE: %s\n", tempPath);
+            errorsCount++;
+        }
+        else
+        {
+            Tile *tmpTile = readImage(file);
+            tiles[i] = *tmpTile;
+
+            free(tmpTile);
+
+            fclose(file);
+        }
+    }
+    *filesCount -= errorsCount;
 }
 
 Tile *readImage(FILE *image)
@@ -253,17 +287,8 @@ int **matchTiles(Tile **imagePieces, Tile *tiles, int lines, int columns, int ti
 }
 
 //Write the final result into a file
-void writeFile(char *filename, Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns)
+void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns)
 {
-    FILE *outputFile;
-    outputFile = fopen(filename, "w");
-
-    if (!outputFile)
-    {
-        fprintf(stderr, "Error reading output file!\n");
-        exit(1);
-    }
-
     //Writes the header information
     fprintf(outputFile, "%s\n", originalImage->type);
     fprintf(outputFile, "%d %d\n", columns * tiles[0].height, lines * tiles[0].width);
@@ -320,5 +345,5 @@ void writeFile(char *filename, Tile *originalImage, int **tileIndexes, Tile *til
         exit(1);
     }
 
-    fclose(outputFile);
+    // fclose(outputFile);
 }

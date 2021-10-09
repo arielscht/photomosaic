@@ -14,16 +14,18 @@ typedef struct
     double avgG, avgB, avgR;
 } Tile;
 
-Tile *readImage(FILE *image);
+float calculateDistance(Tile *tile, Tile *piece);
 
 void calculateAvgColor(Tile *tile);
 
-float calculateDistance(Tile *tile, Tile *piece);
+void readTiles(char *dirName, struct dirent **filesPath, int *filesCount, Tile *tiles);
+
+Tile *readImage(FILE *image);
 
 int **matchTiles(Tile **imagePieces, Tile *tiles, int lines, int columns, int tilesQtd);
 
 Tile **splitInputImage(Tile *image, int tileHeight, int tileWidth);
 
-void writeFile(char *filename, Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns);
+void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns);
 // void writeFile(Tile *originalImage, Tile **imagePieces, int lines, int columns);
 // void writeFile(Tile *originalImage, int lines, int columns);

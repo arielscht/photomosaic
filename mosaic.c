@@ -4,41 +4,16 @@
 #include <string.h>
 #include <math.h>
 #include <getopt.h>
+#include <unistd.h>
 #include "photomosaic.h"
 
-#define DIR_NAME "./tiles20"
-
-void readTiles(char *dirName, struct dirent **filesPath, int *filesCount, Tile *tiles)
+void freeDirentArray(struct dirent **files, int count)
 {
-    FILE *file;
-    char tempPath[200];
-    int errorsCount = 0;
-
-    for (int i = 0; i < *filesCount; i++)
+    for (int i = 0; i < count; i++)
     {
-        tempPath[0] = '\0';
-        strcat(tempPath, dirName);
-        strcat(tempPath, "/");
-        strcat(tempPath, filesPath[i]->d_name);
-
-        file = fopen(tempPath, "r");
-
-        if (!file)
-        {
-            fprintf(stderr, "ERROR OPENING FILE: %s\n", tempPath);
-            errorsCount++;
-        }
-        else
-        {
-            Tile *tmpTile = readImage(file);
-            tiles[i] = *tmpTile;
-
-            free(tmpTile);
-
-            fclose(file);
-        }
+        free(files[i]);
     }
-    *filesCount -= errorsCount;
+    free(files);
 }
 
 int filterFileType(const struct dirent *currentDir)
@@ -52,7 +27,11 @@ int filterFileType(const struct dirent *currentDir)
 
 int main(int argc, char *argv[])
 {
-    FILE *inputImageFile;
+    FILE *inputImageFile = stdin;
+    FILE *outputImageFile = stdout;
+    // FILE *inputImageFile;
+    // FILE *outputImageFile;
+
     Tile *inputImage = NULL;
     Tile *tiles = NULL;
     struct dirent **filesPath = NULL;
@@ -92,7 +71,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (!strlen(directoryName) || !strlen(inputFileName) || !strlen(outputFileName))
+    if (!strlen(directoryName) || (!strlen(inputFileName) && isatty(0)) || (!strlen(outputFileName) && isatty(1)))
     {
         fprintf(stderr, "Missing arguments.\n");
         fprintf(stderr, "Execute ./mosaico -h for help.\n");
@@ -101,9 +80,27 @@ int main(int argc, char *argv[])
 
     /* Scaneia o diretório de tiles, conta a quantidade de arquivos e 
         armazena seus dados em um array */
-    fprintf(stderr, "Reading tiles from %s\n", DIR_NAME);
+    fprintf(stderr, "Reading tiles from %s\n", directoryName);
     filesCount = scandir(directoryName, &filesPath, filterFileType, alphasort);
     tilesCount = filesCount;
+
+    if (filesCount == -1)
+    {
+        fprintf(stderr, "The tile directory does not exist.\n");
+        exit(1);
+    }
+
+    if (isatty(0))
+    {
+        inputImageFile = fopen(inputFileName, "r");
+
+        if (!inputImageFile)
+        {
+            freeDirentArray(filesPath, filesCount);
+            fprintf(stderr, "Error reading input image.\n");
+            exit(1);
+        }
+    }
 
     //Aloca espaço para o vetor de tiles
     tiles = calloc(tilesCount, sizeof(Tile));
@@ -120,18 +117,13 @@ int main(int argc, char *argv[])
     fprintf(stderr, "%d tiles read.\n", tilesCount);
 
     fprintf(stderr, "Reading input file\n");
-    inputImageFile = fopen(inputFileName, "r");
-
-    if (!inputImageFile)
-    {
-        fprintf(stderr, "Error reading input image.");
-        exit(1);
-    }
 
     inputImage = readImage(inputImageFile);
 
     fprintf(stderr, "Input image is PPM %s, %dx%d pixels\n", inputImage->type, inputImage->width, inputImage->height);
-    fclose(inputImageFile);
+
+    if (isatty(0))
+        fclose(inputImageFile);
 
     //Get the amount of tiles in the main image
     int imagePiecesLines = ceil((double)inputImage->height / tiles[0].height);
@@ -144,7 +136,22 @@ int main(int argc, char *argv[])
     int **matchedTiles = matchTiles(imagePieces, tiles, imagePiecesLines, imagePiecesColumns, tilesCount);
 
     fprintf(stderr, "Writing output file.\n");
-    writeFile(outputFileName, inputImage, matchedTiles, tiles, imagePiecesLines, imagePiecesColumns);
+
+    if (isatty(1))
+    {
+        outputImageFile = fopen(outputFileName, "w");
+
+        if (!outputImageFile)
+        {
+            fprintf(stderr, "Error reading output file!\n");
+            exit(1);
+        }
+    }
+
+    writeFile(outputImageFile, inputImage, matchedTiles, tiles, imagePiecesLines, imagePiecesColumns);
+
+    if (isatty(1))
+        fclose(outputImageFile);
 
     fprintf(stderr, "Freeing allocated memory.\n");
 
@@ -179,11 +186,7 @@ int main(int argc, char *argv[])
     free(inputImage);
 
     //Free filesPath
-    for (int i = 0; i < filesCount; i++)
-    {
-        free(filesPath[i]);
-    }
-    free(filesPath);
+    freeDirentArray(filesPath, filesCount);
 
     return 0;
 }
