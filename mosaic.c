@@ -5,7 +5,7 @@
 #include <math.h>
 #include "photomosaic.h"
 
-#define DIR_NAME "../tiles20"
+#define DIR_NAME "./tiles20"
 
 void readTiles(char *dirName, struct dirent **filesPath, int *filesCount, Tile *tiles)
 {
@@ -82,16 +82,7 @@ int main(int argc, char *argv[])
 
     FILE *inputImageFile;
     Tile *inputImage = NULL;
-    // Tile *inputImage = malloc(sizeof(Tile));
-    // if (!inputImage)
-    // {
-    //     fprintf(stderr, "Error allocating memory");
-    //     exit(1);
-    // }
-    inputImageFile = fopen("../images/test-image1.ppm", "r");
-    // inputImageFile = fopen("../images/ariel.ppm", "r");
-    // inputImageFile = fopen("../images/inputTest.ppm", "r");
-    // inputImageFile = fopen("../flower.ppm", "r");
+    inputImageFile = fopen("./images/street.ppm", "r");
 
     if (!inputImageFile)
     {
@@ -102,20 +93,21 @@ int main(int argc, char *argv[])
     inputImage = readImage(inputImageFile);
 
     fprintf(stderr, "Input image is PPM %s, %dx%d pixels\n", inputImage->type, inputImage->width, inputImage->height);
-
     fclose(inputImageFile);
 
-    //calculate img pieces
+    //Get the amount of tiles in the main image
     int imagePiecesLines = ceil((double)inputImage->height / tiles[0].height);
     int imagePiecesColumns = ceil((double)inputImage->width / tiles[0].width);
 
-    Tile **imagePieces = calculateInputImage(inputImage, tiles[0].height, tiles[0].width);
+    fprintf(stderr, "Spliting input image.\n");
+    Tile **imagePieces = splitInputImage(inputImage, tiles[0].height, tiles[0].width);
+    fprintf(stderr, "Matching tiles.\n");
     int **matchedTiles = matchTiles(imagePieces, tiles, imagePiecesLines, imagePiecesColumns, tilesCount);
 
+    fprintf(stderr, "Writing output file.\n");
     writeFile(inputImage, matchedTiles, tiles, imagePiecesLines, imagePiecesColumns);
-    // writeFile(inputImage, imagePieces, imagePiecesLines, imagePiecesColumns);
 
-    fprintf(stderr, "Freeing allocated memory\n");
+    fprintf(stderr, "Freeing allocated memory.\n");
 
     //Free imagePieces and matched pieces
     for (int i = 0; i < imagePiecesLines; i++)

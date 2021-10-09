@@ -4,6 +4,7 @@
 #include <math.h>
 #include "photomosaic.h"
 
+//Exclude comments and blank lines from the file being read
 int excludeInvalidLines(char line[TILE_MAX_LINE_SIZE])
 {
     if (line[0] == '\0' || line[0] == '\n' || line[0] == '#')
@@ -31,17 +32,6 @@ void calculateAvgColor(Tile *tile)
 
 float calculateDistance(Tile *tile, Tile *piece)
 {
-    //APPROACH 1
-    // float distance;
-
-    // distance = abs(sqrt(
-    //     pow(piece->avgR - tile->avgR, 2) +
-    //     pow(piece->avgG - tile->avgG, 2) +
-    //     pow(piece->avgB - tile->avgB, 2)));
-
-    // return distance;
-
-    //APPROACH 2
     float distance;
     float redMean = (tile->avgR + piece->avgR) / 2;
 
@@ -61,7 +51,7 @@ Tile *readImage(FILE *image)
 
     if (!newTile)
     {
-        fprintf(stderr, "Error allocating new tile memory.");
+        fprintf(stderr, "Error allocating new tile memory.\n");
         exit(1);
     }
 
@@ -87,16 +77,16 @@ Tile *readImage(FILE *image)
 
     sscanf(line, "%d", &newTile->maxValue);
 
+    //Reads each pixel of a P3 file and stores in a 2d array
     if (!strcmp(newTile->type, "P3"))
     {
         newTile->pixels = calloc(newTile->height, sizeof(Pixel *));
-
         for (int i = 0; i < newTile->height; i++)
         {
             newTile->pixels[i] = calloc(newTile->width, sizeof(Pixel));
             if (!newTile->pixels[i])
             {
-                fprintf(stderr, "Error allocating memory");
+                fprintf(stderr, "Error allocating memory.\n");
                 exit(1);
             }
             for (int j = 0; j < newTile->width; j++)
@@ -107,6 +97,7 @@ Tile *readImage(FILE *image)
             }
         }
     }
+    //Reads each pixel of a P6 file and stores in a 2d array
     else if (!strcmp(newTile->type, "P6"))
     {
         newTile->pixels = calloc(newTile->height, sizeof(Pixel *));
@@ -116,7 +107,7 @@ Tile *readImage(FILE *image)
             newTile->pixels[i] = calloc(newTile->width, sizeof(Pixel));
             if (!newTile->pixels[i])
             {
-                fprintf(stderr, "Error allocating memory");
+                fprintf(stderr, "Error allocating memory.\n");
                 exit(1);
             }
             for (int j = 0; j < newTile->width; j++)
@@ -134,13 +125,14 @@ Tile *readImage(FILE *image)
         exit(1);
     }
 
-    //Calculate the avg RGB
+    //Calculate the avg RGB of the newly read image
     calculateAvgColor(newTile);
 
     return newTile;
 }
 
-Tile **calculateInputImage(Tile *image, int tileHeight, int tileWidth)
+//Splits the input image into small pieces and returns a 2d array of these pieces
+Tile **splitInputImage(Tile *image, int tileHeight, int tileWidth)
 {
     int imagePiecesHeight = ceil((double)image->height / tileHeight);
     int imagePiecesWidth = ceil((double)image->width / tileWidth);
@@ -150,7 +142,7 @@ Tile **calculateInputImage(Tile *image, int tileHeight, int tileWidth)
     imagePieces = calloc(imagePiecesHeight, sizeof(Tile *));
     if (!imagePieces)
     {
-        fprintf(stderr, "Error allocating memory");
+        fprintf(stderr, "Error allocating memory.\n");
         exit(1);
     }
     for (int i = 0; i < imagePiecesHeight; i++)
@@ -158,7 +150,7 @@ Tile **calculateInputImage(Tile *image, int tileHeight, int tileWidth)
         imagePieces[i] = calloc(imagePiecesWidth, sizeof(Tile));
         if (!imagePieces[i])
         {
-            fprintf(stderr, "Error allocating memory");
+            fprintf(stderr, "Error allocating memory.\n");
             exit(1);
         }
     }
@@ -213,13 +205,15 @@ Tile **calculateInputImage(Tile *image, int tileHeight, int tileWidth)
     return imagePieces;
 }
 
+//Match each image pieces to individual tiles in the tiles array
+//Returns an matrix of integer representing the index of each tile in the array
 int **matchTiles(Tile **imagePieces, Tile *tiles, int lines, int columns, int tilesQtd)
 {
     int **tileIndexes;
     tileIndexes = calloc(lines, sizeof(int *));
     if (!tileIndexes)
     {
-        fprintf(stderr, "Error allocating memory");
+        fprintf(stderr, "Error allocating memory.\n");
         exit(1);
     }
 
@@ -228,7 +222,7 @@ int **matchTiles(Tile **imagePieces, Tile *tiles, int lines, int columns, int ti
         tileIndexes[i] = calloc(columns, sizeof(int));
         if (!tileIndexes[i])
         {
-            fprintf(stderr, "Error allocating memory");
+            fprintf(stderr, "Error allocating memory.\n");
             exit(1);
         }
     }
@@ -254,24 +248,28 @@ int **matchTiles(Tile **imagePieces, Tile *tiles, int lines, int columns, int ti
         }
     }
 
+    fprintf(stderr, "Matched %d image pieces to a individual tile.\n", curIndex);
     return tileIndexes;
 }
 
+//Write the final result into a file
 void writeFile(Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns)
 {
     FILE *outputFile;
-    outputFile = fopen("feijao.ppm", "w+");
+    outputFile = fopen("output.ppm", "w");
 
     if (!outputFile)
     {
-        fprintf(stderr, "Error reading output file!");
+        fprintf(stderr, "Error reading output file!\n");
         exit(1);
     }
 
+    //Writes the header information
     fprintf(outputFile, "%s\n", originalImage->type);
     fprintf(outputFile, "%d %d\n", columns * tiles[0].height, lines * tiles[0].width);
     fprintf(outputFile, "%d\n", originalImage->maxValue);
 
+    //Writes each pixel from the tiles matrix
     if (!strcmp(originalImage->type, "P3"))
     {
         int i = 0, j = 0, k = 0, l = 0;
@@ -318,77 +316,9 @@ void writeFile(Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, i
     }
     else
     {
-        fprintf(stderr, "Invalid file format!");
+        fprintf(stderr, "Invalid file format!\n");
         exit(1);
     }
 
     fclose(outputFile);
 }
-
-// void writeFile(Tile *originalImage, Tile **imagePieces, int lines, int columns)
-// {
-//     FILE *outputFile;
-//     outputFile = fopen("feijao.ppm", "w+");
-
-//     if (!outputFile)
-//     {
-//         fprintf(stderr, "Error reading output file!");
-//         exit(1);
-//     }
-
-//     fprintf(outputFile, "%s\n", originalImage->type);
-//     fprintf(outputFile, "%d %d\n", originalImage->width, originalImage->height);
-//     fprintf(outputFile, "%d\n", originalImage->maxValue);
-
-//     if (!strcmp(originalImage->type, "P3"))
-//     {
-//         int i = 0, j = 0, k = 0, l = 0;
-//         for (i = 0; i < lines; i++)
-//         {
-//             for (k = 0; k < imagePieces[i][j].height; k++)
-//             {
-//                 for (j = 0; j < columns; j++)
-//                 {
-//                     for (l = 0; l < imagePieces[i][j].width; l++)
-//                     {
-//                         fprintf(outputFile, "%d %d %d ", imagePieces[i][j].pixels[k][l].red, imagePieces[i][j].pixels[k][l].green, imagePieces[i][j].pixels[k][l].blue);
-//                     }
-//                     l = 0;
-//                     fgetc(outputFile);
-//                     fprintf(outputFile, "\n");
-//                 }
-//                 j = 0;
-//             }
-//             i = 0;
-//         }
-//     }
-//     else if (!strcmp(originalImage->type, "P6"))
-//     {
-//         int i = 0, j = 0, k = 0, l = 0;
-//         for (i = 0; i < lines; i++)
-//         {
-//             for (k = 0; k < imagePieces[i][j].height; k++)
-//             {
-//                 for (j = 0; j < columns; j++)
-//                 {
-//                     for (l = 0; l < imagePieces[i][j].width; l++)
-//                     {
-//                         fwrite(&imagePieces[i][j].pixels[k][l].red, 1, 1, outputFile);
-//                         fwrite(&imagePieces[i][j].pixels[k][l].green, 1, 1, outputFile);
-//                         fwrite(&imagePieces[i][j].pixels[k][l].blue, 1, 1, outputFile);
-//                     }
-//                     l = 0;
-//                 }
-//                 j = 0;
-//             }
-//             k = 0;
-//         }
-//     }
-//     else
-//     {
-//         fprintf(stderr, "Invalid file format!");
-//         exit(1);
-//     }
-
-//     fclose(outputFile);
-// }
