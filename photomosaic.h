@@ -5,7 +5,6 @@ typedef struct
 {
     int red, green, blue;
 } Pixel;
-
 typedef struct
 {
     Pixel **pixels;
@@ -27,5 +26,3 @@ int **matchTiles(Tile **imagePieces, Tile *tiles, int lines, int columns, int ti
 Tile **splitInputImage(Tile *image, int tileHeight, int tileWidth);
 
 void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns);
-// void writeFile(Tile *originalImage, Tile **imagePieces, int lines, int columns);
-// void writeFile(Tile *originalImage, int lines, int columns);

@@ -29,8 +29,6 @@ int main(int argc, char *argv[])
 {
     FILE *inputImageFile = stdin;
     FILE *outputImageFile = stdout;
-    // FILE *inputImageFile;
-    // FILE *outputImageFile;
 
     Tile *inputImage = NULL;
     Tile *tiles = NULL;

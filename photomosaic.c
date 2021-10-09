@@ -344,6 +344,4 @@ void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *t
         fprintf(stderr, "Invalid file format!\n");
         exit(1);
     }
-
-    // fclose(outputFile);
 }
