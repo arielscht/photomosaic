@@ -24,6 +24,6 @@ int **matchTiles(Tile **imagePieces, Tile *tiles, int lines, int columns, int ti
 
 Tile **splitInputImage(Tile *image, int tileHeight, int tileWidth);
 
-void writeFile(Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns);
+void writeFile(char *filename, Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns);
 // void writeFile(Tile *originalImage, Tile **imagePieces, int lines, int columns);
 // void writeFile(Tile *originalImage, int lines, int columns);

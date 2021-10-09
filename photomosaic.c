@@ -253,10 +253,10 @@ int **matchTiles(Tile **imagePieces, Tile *tiles, int lines, int columns, int ti
 }
 
 //Write the final result into a file
-void writeFile(Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns)
+void writeFile(char *filename, Tile *originalImage, int **tileIndexes, Tile *tiles, int lines, int columns)
 {
     FILE *outputFile;
-    outputFile = fopen("output.ppm", "w");
+    outputFile = fopen(filename, "w");
 
     if (!outputFile)
     {

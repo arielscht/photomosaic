@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <getopt.h>
 #include "photomosaic.h"
 
 #define DIR_NAME "./tiles20"
@@ -51,15 +52,57 @@ int filterFileType(const struct dirent *currentDir)
 
 int main(int argc, char *argv[])
 {
+    FILE *inputImageFile;
+    Tile *inputImage = NULL;
     Tile *tiles = NULL;
     struct dirent **filesPath = NULL;
     int filesCount = 0;
     int tilesCount = 0;
+    char directoryName[200] = "", inputFileName[200] = "", outputFileName[200] = "";
+
+    int option;
+    while ((option = getopt(argc, argv, "p:i:o:h::")) != -1)
+    {
+        switch (option)
+        {
+        case 'p':
+            strcpy(directoryName, optarg);
+            break;
+        case 'i':
+            strcpy(inputFileName, optarg);
+            break;
+        case 'o':
+            strcpy(outputFileName, optarg);
+            break;
+        case 'h':
+            printf("help\n");
+            exit(1);
+            break;
+        case '?':
+            if (optopt == 'i' || optopt == 'o' || optopt == 'p')
+                fprintf(stderr, "Opção -%c requer um argumento.\n", optopt);
+            else
+            {
+                fprintf(stderr, "Opção desconhecida.\nExecute ./mosaico -h para obter ajuda.\n");
+            }
+            return 1;
+        default:
+            abort();
+            break;
+        }
+    }
+
+    if (!strlen(directoryName) || !strlen(inputFileName) || !strlen(outputFileName))
+    {
+        fprintf(stderr, "Missing arguments.\n");
+        fprintf(stderr, "Execute ./mosaico -h for help.\n");
+        exit(1);
+    }
 
     /* Scaneia o diretório de tiles, conta a quantidade de arquivos e 
         armazena seus dados em um array */
     fprintf(stderr, "Reading tiles from %s\n", DIR_NAME);
-    filesCount = scandir(DIR_NAME, &filesPath, filterFileType, alphasort);
+    filesCount = scandir(directoryName, &filesPath, filterFileType, alphasort);
     tilesCount = filesCount;
 
     //Aloca espaço para o vetor de tiles
@@ -71,18 +114,13 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    readTiles(DIR_NAME, filesPath, &tilesCount, tiles);
+    readTiles(directoryName, filesPath, &tilesCount, tiles);
 
     fprintf(stderr, "Tile size is %dx%d\n", tiles[0].width, tiles[0].height);
     fprintf(stderr, "%d tiles read.\n", tilesCount);
 
     fprintf(stderr, "Reading input file\n");
-
-    // =========== INPUT IMAGE ===========
-
-    FILE *inputImageFile;
-    Tile *inputImage = NULL;
-    inputImageFile = fopen("./images/street.ppm", "r");
+    inputImageFile = fopen(inputFileName, "r");
 
     if (!inputImageFile)
     {
@@ -101,11 +139,12 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "Spliting input image.\n");
     Tile **imagePieces = splitInputImage(inputImage, tiles[0].height, tiles[0].width);
+
     fprintf(stderr, "Matching tiles.\n");
     int **matchedTiles = matchTiles(imagePieces, tiles, imagePiecesLines, imagePiecesColumns, tilesCount);
 
     fprintf(stderr, "Writing output file.\n");
-    writeFile(inputImage, matchedTiles, tiles, imagePiecesLines, imagePiecesColumns);
+    writeFile(outputFileName, inputImage, matchedTiles, tiles, imagePiecesLines, imagePiecesColumns);
 
     fprintf(stderr, "Freeing allocated memory.\n");
 
@@ -130,7 +169,6 @@ int main(int argc, char *argv[])
         for (int j = 0; j < tiles[i].height; j++)
             free(tiles[i].pixels[j]);
         free(tiles[i].pixels);
-        // free(tiles[i]);
     }
     free(tiles);
 
