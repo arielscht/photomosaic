@@ -291,20 +291,31 @@ void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *t
 {
     //Writes the header information
     fprintf(outputFile, "%s\n", originalImage->type);
-    fprintf(outputFile, "%d %d\n", columns * tiles[0].height, lines * tiles[0].width);
+    fprintf(outputFile, "%d %d\n", originalImage->width, originalImage->height);
     fprintf(outputFile, "%d\n", originalImage->maxValue);
 
     //Writes each pixel from the tiles matrix
     if (!strcmp(originalImage->type, "P3"))
     {
+        fprintf(stderr, "WRITING P3");
         int i = 0, j = 0, k = 0, l = 0;
         for (i = 0; i < lines; i++)
         {
-            for (k = 0; k < tiles[tileIndexes[i][j]].height; k++)
+            int maxK;
+            if (i == (lines - 1))
+                maxK = originalImage->height % tiles[tileIndexes[i][j]].height;
+            else
+                maxK = tiles[tileIndexes[i][j]].height;
+            for (k = 0; k < maxK; k++)
             {
                 for (j = 0; j < columns; j++)
                 {
-                    for (l = 0; l < tiles[tileIndexes[i][j]].width; l++)
+                    int maxL;
+                    if (j == (columns - 1))
+                        maxL = originalImage->width % tiles[tileIndexes[i][j]].width;
+                    else
+                        maxL = tiles[tileIndexes[i][j]].width;
+                    for (l = 0; l < maxL; l++)
                     {
                         fprintf(outputFile, "%d %d %d ", tiles[tileIndexes[i][j]].pixels[k][l].red, tiles[tileIndexes[i][j]].pixels[k][l].green, tiles[tileIndexes[i][j]].pixels[k][l].blue);
                     }
@@ -314,7 +325,7 @@ void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *t
                 }
                 j = 0;
             }
-            i = 0;
+            k = 0;
         }
     }
     else if (!strcmp(originalImage->type, "P6"))
@@ -322,11 +333,21 @@ void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *t
         int i = 0, j = 0, k = 0, l = 0;
         for (i = 0; i < lines; i++)
         {
-            for (k = 0; k < tiles[tileIndexes[i][j]].height; k++)
+            int maxK;
+            if (i == (lines - 1))
+                maxK = originalImage->height % tiles[tileIndexes[i][j]].height;
+            else
+                maxK = tiles[tileIndexes[i][j]].height;
+            for (k = 0; k < maxK; k++)
             {
                 for (j = 0; j < columns; j++)
                 {
-                    for (l = 0; l < tiles[tileIndexes[i][j]].width; l++)
+                    int maxL;
+                    if (j == (columns - 1))
+                        maxL = originalImage->width % tiles[tileIndexes[i][j]].width;
+                    else
+                        maxL = tiles[tileIndexes[i][j]].width;
+                    for (l = 0; l < maxL; l++)
                     {
                         fwrite(&tiles[tileIndexes[i][j]].pixels[k][l].red, 1, 1, outputFile);
                         fwrite(&tiles[tileIndexes[i][j]].pixels[k][l].green, 1, 1, outputFile);
