@@ -295,74 +295,50 @@ void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *t
     fprintf(outputFile, "%d\n", originalImage->maxValue);
 
     //Writes each pixel from the tiles matrix
-    if (!strcmp(originalImage->type, "P3"))
+    int i = 0, j = 0, k = 0, l = 0;
+    for (i = 0; i < lines; i++)
     {
-        fprintf(stderr, "WRITING P3");
-        int i = 0, j = 0, k = 0, l = 0;
-        for (i = 0; i < lines; i++)
+        int maxK;
+        if (i == (lines - 1))
+            maxK = originalImage->height % tiles[tileIndexes[i][j]].height;
+        else
+            maxK = tiles[tileIndexes[i][j]].height;
+        for (k = 0; k < maxK; k++)
         {
-            int maxK;
-            if (i == (lines - 1))
-                maxK = originalImage->height % tiles[tileIndexes[i][j]].height;
-            else
-                maxK = tiles[tileIndexes[i][j]].height;
-            for (k = 0; k < maxK; k++)
+            for (j = 0; j < columns; j++)
             {
-                for (j = 0; j < columns; j++)
+                int maxL;
+                if (j == (columns - 1))
+                    maxL = originalImage->width % tiles[tileIndexes[i][j]].width;
+                else
+                    maxL = tiles[tileIndexes[i][j]].width;
+                for (l = 0; l < maxL; l++)
                 {
-                    int maxL;
-                    if (j == (columns - 1))
-                        maxL = originalImage->width % tiles[tileIndexes[i][j]].width;
-                    else
-                        maxL = tiles[tileIndexes[i][j]].width;
-                    for (l = 0; l < maxL; l++)
+                    if (!strcmp(originalImage->type, "P3"))
                     {
                         fprintf(outputFile, "%d %d %d ", tiles[tileIndexes[i][j]].pixels[k][l].red, tiles[tileIndexes[i][j]].pixels[k][l].green, tiles[tileIndexes[i][j]].pixels[k][l].blue);
                     }
-                    l = 0;
-                    fgetc(outputFile);
-                    fprintf(outputFile, "\n");
-                }
-                j = 0;
-            }
-            k = 0;
-        }
-    }
-    else if (!strcmp(originalImage->type, "P6"))
-    {
-        int i = 0, j = 0, k = 0, l = 0;
-        for (i = 0; i < lines; i++)
-        {
-            int maxK;
-            if (i == (lines - 1))
-                maxK = originalImage->height % tiles[tileIndexes[i][j]].height;
-            else
-                maxK = tiles[tileIndexes[i][j]].height;
-            for (k = 0; k < maxK; k++)
-            {
-                for (j = 0; j < columns; j++)
-                {
-                    int maxL;
-                    if (j == (columns - 1))
-                        maxL = originalImage->width % tiles[tileIndexes[i][j]].width;
-                    else
-                        maxL = tiles[tileIndexes[i][j]].width;
-                    for (l = 0; l < maxL; l++)
+                    else if (!strcmp(originalImage->type, "P6"))
                     {
                         fwrite(&tiles[tileIndexes[i][j]].pixels[k][l].red, 1, 1, outputFile);
                         fwrite(&tiles[tileIndexes[i][j]].pixels[k][l].green, 1, 1, outputFile);
                         fwrite(&tiles[tileIndexes[i][j]].pixels[k][l].blue, 1, 1, outputFile);
                     }
-                    l = 0;
+                    else
+                    {
+                        fprintf(stderr, "Invalid file format!\n");
+                        exit(1);
+                    }
                 }
-                j = 0;
+                l = 0;
+                if (!strcmp(originalImage->type, "P3"))
+                {
+                    fgetc(outputFile);
+                    fprintf(outputFile, "\n");
+                }
             }
-            k = 0;
+            j = 0;
         }
-    }
-    else
-    {
-        fprintf(stderr, "Invalid file format!\n");
-        exit(1);
+        k = 0;
     }
 }
