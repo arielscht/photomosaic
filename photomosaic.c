@@ -299,7 +299,7 @@ void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *t
     for (i = 0; i < lines; i++)
     {
         int maxK;
-        if (i == (lines - 1))
+        if (i == (lines - 1) && originalImage->height % tiles[tileIndexes[i][j]].height > 0)
             maxK = originalImage->height % tiles[tileIndexes[i][j]].height;
         else
             maxK = tiles[tileIndexes[i][j]].height;
@@ -308,7 +308,7 @@ void writeFile(FILE *outputFile, Tile *originalImage, int **tileIndexes, Tile *t
             for (j = 0; j < columns; j++)
             {
                 int maxL;
-                if (j == (columns - 1))
+                if (j == (columns - 1) && originalImage->width % tiles[tileIndexes[i][j]].width > 0)
                     maxL = originalImage->width % tiles[tileIndexes[i][j]].width;
                 else
                     maxL = tiles[tileIndexes[i][j]].width;
