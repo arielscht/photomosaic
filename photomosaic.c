@@ -115,6 +115,11 @@ Tile *readImage(FILE *image)
     if (!strcmp(newTile->type, "P3"))
     {
         newTile->pixels = calloc(newTile->height, sizeof(Pixel *));
+        if (!newTile->pixels)
+        {
+            fprintf(stderr, "Error allocating memory.\n");
+            exit(1);
+        }
         for (int i = 0; i < newTile->height; i++)
         {
             newTile->pixels[i] = calloc(newTile->width, sizeof(Pixel));
@@ -135,7 +140,11 @@ Tile *readImage(FILE *image)
     else if (!strcmp(newTile->type, "P6"))
     {
         newTile->pixels = calloc(newTile->height, sizeof(Pixel *));
-
+        if (!newTile->pixels)
+        {
+            fprintf(stderr, "Error allocating memory.\n");
+            exit(1);
+        }
         for (int i = 0; i < newTile->height; i++)
         {
             newTile->pixels[i] = calloc(newTile->width, sizeof(Pixel));
