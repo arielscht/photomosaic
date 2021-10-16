@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     struct dirent **filesPath = NULL;
     int filesCount = 0;
     int tilesCount = 0;
-    char directoryName[200] = "", inputFileName[200] = "", outputFileName[200] = "";
+    char directoryName[200] = "./tiles", inputFileName[200] = "", outputFileName[200] = "";
 
     int option;
     while ((option = getopt(argc, argv, "p:i:o:h::")) != -1)
@@ -52,15 +52,31 @@ int main(int argc, char *argv[])
             strcpy(outputFileName, optarg);
             break;
         case 'h':
-            printf("help\n");
+            fprintf(stderr, "\nWelcome to the photomosaic software!\n");
+            fprintf(stderr, "Here you can learn how you can transform any image you like into a photomosaic.\n\n");
+            fprintf(stderr, "Supported file formats: \n\t PPM P3 and PPM P6\n\n");
+            fprintf(stderr, "You can find the argument list below:\n\n");
+            fprintf(stderr, "-p [tiles directory]\n");
+            fprintf(stderr, "\tInforms the directory where the software will look for the tiles images. Default is ./tiles\n\n");
+            fprintf(stderr, "-i [input file]\n");
+            fprintf(stderr, "\tInforms the input file path. This is the file that will be transformed into a mosaic.\n\n");
+            fprintf(stderr, "-o [output file]\n");
+            fprintf(stderr, "\tInforms the name of the output file which the mosaic will be written to. It will be overwritten in case it already exists and created otherwise.\n\n");
+            fprintf(stderr, "You can also inform the input and output files through stdin and stdout.\n");
+            fprintf(stderr, "You must at least inform the input and output files.\n\n");
+            fprintf(stderr, "Below you find some examples of execution:\n\n");
+            fprintf(stderr, "./mosaico -p ./tiles20 -i input.ppm -o output.ppm\n");
+            fprintf(stderr, "./mosaico -o output.ppm -i input.ppm\n");
+            fprintf(stderr, "./mosaico -p ./tiles20 < input.ppm > output.ppm\n");
+            fprintf(stderr, "./mosaico < input.ppm > output.ppm\n\n");
             exit(1);
             break;
         case '?':
             if (optopt == 'i' || optopt == 'o' || optopt == 'p')
-                fprintf(stderr, "Opção -%c requer um argumento.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
             else
             {
-                fprintf(stderr, "Opção desconhecida.\nExecute ./mosaico -h para obter ajuda.\n");
+                fprintf(stderr, "Unknown option.\nExecute ./mosaico -h for help.\n");
             }
             return 1;
         default:
